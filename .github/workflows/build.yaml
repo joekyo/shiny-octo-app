@@ -2,9 +2,8 @@ name: Build and Push to GHCR
 
 on:
   push:
-    branches: [ main ]
-    tags:
-      - "v*"
+    branches: [main]
+    tags: ['v*']
 
 permissions:
   contents: read
@@ -28,8 +27,7 @@ jobs:
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
           go build -o app .
 
-      - name: Install ko
-        run: go install github.com/google/ko@latest
+      - uses: ko-build/setup-ko@v0.6
 
       - name: Login to GHCR
         run: |
@@ -52,4 +50,4 @@ jobs:
           TAGS="${TAGS},latest"
           echo "tags is ${TAGS}"
 
-          ko build . --tags ${TAGS}
+          ko build . --base-import-paths --tags ${TAGS}
