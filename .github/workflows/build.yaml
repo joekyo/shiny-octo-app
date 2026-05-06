@@ -50,4 +50,30 @@ jobs:
           TAGS="${TAGS},latest"
           echo "tags is ${TAGS}"
 
-          ko build . --base-import-paths --tags ${TAGS}
+          IMAGE=`ko build . --base-import-paths --tags ${TAGS}`
+
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+          echo "DIGEST=${IMAGE#*@}" >> $GITHUB_ENV
+
+      - name: Checkout GitOps repo
+        uses: actions/checkout@v4
+        with:
+          repository: joekyo/shiny-octo-argo
+          token: ${{ secrets.GH_PAT }}
+          path: argo
+
+      - name: Update image digest
+        run: |
+          cd argo
+          yq -i '
+            (.images[] | select(.name=="miniweb") | .digest) = strenv(DIGEST)
+          ' k8s/overlays/prod/kustomization.yaml
+
+      - name: Commit changes
+        run: |
+          cd argo
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "deploy miniweb ${{ steps.ko.outputs.image }}" || echo "no changes"
+          git push
