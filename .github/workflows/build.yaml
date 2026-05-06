@@ -28,21 +28,8 @@ jobs:
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
           go build -o app .
 
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: go install github.com/google/ko@latest
 
-      - name: Build image
-        run: |
-          docker build \
-            -t ghcr.io/${{ github.repository_owner }}/minimal-go-web:${{ github.sha }} \
-            -t ghcr.io/${{ github.repository_owner }}/minimal-go-web:latest \
-            .
-
-      - name: Push image
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/minimal-go-web:${{ github.sha }}
-          docker push ghcr.io/${{ github.repository_owner }}/minimal-go-web:latest
+      - run: |
+          export KO_DOCKER_REPO=ghcr.io/${{ github.repository_owner }}
+          ko build .
