@@ -3,6 +3,8 @@ name: Build and Push to GHCR
 on:
   push:
     branches: [ main ]
+    tags:
+      - "v*"
 
 permissions:
   contents: read
@@ -39,4 +41,13 @@ jobs:
       - name: Build & Push Image
         run: |
           export KO_DOCKER_REPO=ghcr.io/${{ github.repository_owner }}
-          ko build .
+
+          SHORT_SHA=${GITHUB_SHA::7}
+          BRANCH=${GITHUB_REF_NAME}
+
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            TAGS="${TAGS},${GITHUB_REF_NAME},latest"
+          else
+            TAGS="${SHORT_SHA},${BRANCH}"
+          fi
+          ko build . --tags ${TAGS}
