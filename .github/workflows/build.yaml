@@ -16,15 +16,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ---------- setup go ----------
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+
+      # ---------- build binary ----------
+      - name: Build binary
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+          go build -o app .
+
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build Go
-        run: go build ./...
 
       - name: Build image
         run: |
